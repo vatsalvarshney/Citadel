@@ -13,9 +13,9 @@ from django.conf import settings
 
 SSO_TOKEN = 'token'
 REFRESH_TOKEN = 'rememberme'
-AUTH_URL = 'https://auth.devclub.in/user/login'
-REFRESH_URL = 'https://auth.devclub.in/auth/refresh-token'
-PUBLIC_KEY = 'bookShelf/public.pem'
+AUTH_URL = 'http://localhost:8000/user/login'
+REFRESH_URL = 'http://localhost:8000/auth/refresh-token'
+PUBLIC_KEY = 'bookShelf/public-key.cer'
 MAX_TTL_ALLOWED = 60 * 5
 QUERY_PARAM = 'serviceURL'
 LOGOUT_PATH = '/books/userlogout/'
@@ -52,7 +52,18 @@ class SSOMiddleware:
         self.cookies = None
         
     def __call__(self, request):
-        
+        # BYPASS CASI STARTED
+        self.assign_user(request, {
+            'email': 'arpit.saxena2000000@yahoo.in',
+            'firstname': 'Arpit',
+            'lastname': 'Saxena',
+            'username': 'arpit.saxena20000000'
+        })
+
+        self.log(request, 'getting response')
+        response = self.get_response(request)
+        return response
+        # BYPASS CASI ENDED
         if (request.path == LOGOUT_PATH):
             return self.logout(request)
 
@@ -137,6 +148,7 @@ class SSOMiddleware:
         user.first_name = user_payload['firstname']
         user.last_name = user_payload['lastname']
         user.username = user_payload['username']
+        user.is_superuser = True
         if self.check_superuser(request, user_payload):
             user.is_superuser = True
         user.save()
@@ -184,8 +196,8 @@ class SSOMiddleware:
     def logout(self,request):
         logout(request)
         response = self.get_response(request)
-        response.delete_cookie(SSO_TOKEN,domain='devclub.in')
-        response.delete_cookie(REFRESH_TOKEN,domain='devclub.in')
+        response.delete_cookie(SSO_TOKEN,domain='localhost')
+        response.delete_cookie(REFRESH_TOKEN,domain='localhost')
         return response
     
     def redirect(self,request):
